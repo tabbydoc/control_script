@@ -6,6 +6,7 @@ import copy
 import configparser
 from termcolor import colored
 from sys import argv
+import re
 
 _debug = 0
 _copy_suffix = 1
@@ -26,7 +27,7 @@ def create_config(path_config):
     config.add_section("datasets")
     config.set("datasets", "output_path", "")
     config.set("datasets", "local_path", "")
-    config.set("datasets", "amount_of_reserve", "1")
+    config.set("datasets", "amount_of_datasets", "1")
 
     config.add_section("data1")
     config.set("data1", "name", "")
@@ -112,6 +113,8 @@ def move_files(in_path):
 if __name__ == "__main__":
     print(colored('\n Starting the script', 'blue', attrs=['bold']) + '\n')
     path = "config.ini"
+    regex_out = "{output_path}"
+    regex_loc = "{local_path}"
     if not os.path.exists(path):
         error_message(0, path, '', '')  # ERROR
         create_config(path)
@@ -141,7 +144,7 @@ if __name__ == "__main__":
         os.makedirs(annotations_path)
         os.makedirs(xmls_path)
 
-        for i in range(int(config.get("datasets", 'amount_of_reserve'))):
+        for i in range(int(config.get("datasets", 'amount_of_datasets'))):
             print(colored("= " + config.get('data' + str(i + 1), 'name') + " =", 'blue'))
             script = config.get('data' + str(i + 1), 'script_to_convert')
             data_dir = config.get('data' + str(i + 1), 'path_to_dataset')
@@ -149,7 +152,7 @@ if __name__ == "__main__":
                 if script != "":
                     print(colored('Running script', 'blue'), colored(script, 'blue', attrs=['underline']) + '\n',
                           colored('-i ' + data_dir + ' -o ' + output_dir, 'blue') + '\n')
-                    code = subprocess.call(['python', script, '-i' + data_dir, '-o' + output_dir])
+                    code = subprocess.call(['python', script, '-i' + data_dir, '-o' + output_dir, '', ''])
                     if code != 0:
                         error_message(3, script, code, '')
                 else:
@@ -162,15 +165,27 @@ if __name__ == "__main__":
         shutil.rmtree(output_dir + '/images')
         print(colored(' - Some data conversions -', 'blue'))
         subprocess.call(['python', 'transform_data_dir.py', local_dir, output_dir, 'annotations/xmls', 'images', '0'])
-
+        
+        params = ['', '', '', '', '', '', '', '', '', '']
+        
         print(colored(" - Image Transform - ", 'blue'))
         script = config.get('image-transform', 'script_to_transform')
         data_dir = config.get("datasets", 'output_path')
+        count_parameters = config.get('image-transform', 'amount_of_parameters')
+        for j in range(int(count_parameters)):
+            params[j] = config.get('image-transform', 'parameter'+str(j+1))
+            if re.findall(regex_out, params[j]):
+                params[j] = re.sub(regex_out, output_dir, params[j], count=0)
+            elif re.findall(regex_loc, params[j]):
+                params[j] = re.sub(regex_loc, local_dir, params[j], count=0)
         if os.path.exists(script) or script == "":
             if script != "":
                 print(colored('Running script', 'blue'), colored(script, 'blue', attrs=['underline']) + '\n',
-                      colored('-i ' + data_dir + ' -o ' + output_dir, 'blue') + '\n')
-                code = subprocess.call(['python', script, '-i' + data_dir, '-o' + output_dir])
+                      colored(params[0] + ' ' + params[1] + ' ' + params[2] + ' ' + params[3] + ' ' + params[4] + ' '
+                              + params[5] + ' ' + params[6] + ' ' + params[7] + ' ' + params[8] + ' '
+                              + params[9], 'blue') + '\n')
+                code = subprocess.call(['python', script, params[0], params[1], params[2], params[3], params[4],
+                                        params[5], params[6], params[7], params[8], params[9]])
                 if code != 0:
                     error_message(3, script, code, '')
             else:
@@ -181,11 +196,21 @@ if __name__ == "__main__":
         print(colored(" - Tuning Image - ", 'blue'))
         script = config.get('tuning-image', 'script_to_tuning')
         data_dir = config.get("datasets", 'output_path')
+        count_parameters = config.get('tuning-image', 'amount_of_parameters')
+        for j in range(int(count_parameters)):
+            params[j] = config.get('tuning-image', 'parameter' + str(j + 1))
+            if re.findall(regex_out, params[j]):
+                params[j] = re.sub(regex_out, output_dir, params[j], count=0)
+            elif re.findall(regex_loc, params[j]):
+                params[j] = re.sub(regex_loc, local_dir, params[j], count=0)
         if os.path.exists(script) or script == "":
             if script != "":
                 print(colored('Running script', 'blue'), colored(script, 'blue', attrs=['underline']) + '\n',
-                      colored('-i ' + data_dir + ' -o ' + output_dir, 'blue') + '\n')
-                code = subprocess.call(['python', script, '--data_dir=' + data_dir, '--output_dir=' + local_dir])
+                      colored(params[0] + ' ' + params[1] + ' ' + params[2] + ' ' + params[3] + ' ' + params[4] + ' '
+                              + params[5] + ' ' + params[6] + ' ' + params[7] + ' ' + params[8] + ' '
+                              + params[9], 'blue') + '\n')
+                code = subprocess.call(['python', script, params[0], params[1], params[2], params[3], params[4],
+                                        params[5], params[6], params[7], params[8], params[9]])
                 if code != 0:
                     error_message(3, script, code, '')
             else:
@@ -206,12 +231,25 @@ if __name__ == "__main__":
         data_dir = config.get("datasets", 'output_path')
         output_path = config.get("records", 'path_to_output')
         label_map_path = config.get("records", 'path_to_label_map')
+        count_parameters = config.get('records', 'amount_of_parameters')
+        for j in range(int(count_parameters)):
+            params[j] = config.get('records', 'parameter' + str(j + 1))
+            if re.findall(regex_out, params[j]):
+                params[j] = re.sub(regex_out, output_dir, params[j], count=0)
+            elif re.findall(regex_loc, params[j]):
+                params[j] = re.sub(regex_loc, local_dir, params[j], count=0)
+            elif re.findall(r'{path_to_output}', params[j]):
+                params[j] = re.sub(r'{path_to_output}', output_path, params[j], count=0)
+            elif re.findall(r'{path_to_label_map}', params[j]):
+                params[j] = re.sub(r'{path_to_label_map}', label_map_path, params[j], count=0)
         if os.path.exists(script) or script == "":
             if script != "":
                 print(colored('Running script', 'blue'), colored(script, 'blue', attrs=['underline']) + '\n',
-                      colored('-i ' + data_dir + ' -o ' + output_dir, 'blue') + '\n')
-                code = subprocess.call(['python', script, '--data_dir=' + data_dir, '--output_dir=' + output_path,
-                                        '--label_map_path=' + label_map_path])
+                      colored(params[0] + ' ' + params[1] + ' ' + params[2] + ' ' + params[3] + ' ' + params[4] + ' '
+                              + params[5] + ' ' + params[6] + ' ' + params[7] + ' ' + params[8] + ' '
+                              + params[9], 'blue') + '\n')
+                code = subprocess.call(['python', script, params[0], params[1], params[2], params[3], params[4],
+                                        params[5], params[6], params[7], params[8], params[9]])
                 if code != 0:
                     error_message(3, script, code, '')
             else:
