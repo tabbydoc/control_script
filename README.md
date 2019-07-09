@@ -1,6 +1,7 @@
 # control_script
 Script to optimize data preparation for training ANN models
-***
+
+------------
 The script uses a special file *config.ini*. This file contains the script start-up parameters. This is necessary to simplify the launch of the script. *Config.ini* file is divided into sections. The first section is ‘‘Datasets’’. 
 ```ini
     [datasets]
@@ -9,7 +10,8 @@ The script uses a special file *config.ini*. This file contains the script start
     amount_of_datasets = N
 ```
 The *output_path* parameter stores the path where the converted data will be saved. The *local_path* parameter is the path to the directory where the temporary script files will be stored. This parameter is needed if there are several datasets and a script that converts one dataset into another re-creates the directories, thereby deleting the files that were in the *output_path* folder. The converted dataset will be copied to the temporary folder, files that have the same name will be renamed. The *amount_of_datasets* parameter shows how many datasets need to be converted.
-***
+
+------------
 The following N sections store parameters for specific datasets.
 ```ini
     [dataN]
@@ -41,9 +43,11 @@ Example:
     script_to_convert =
 ```
 Inside the *dataN* section there are three parameters: *name*, *path_to_datasets*, *script_to_convert*. The *name* parameter is needed in order to display a message on the console exactly which data is converted (this parameter is necessary for the convenience of reading logs). The *path_to_datasets* parameter stores the path to dataset. The *script_to_convert* contains the path to the script that converts datasets
-***
+
+------------
    **Note:** There may be changes!
-***    
+
+------------
 The next section is *image-transform*. This section contains options for image conversion.
 ```ini
     [image-transform]
@@ -63,7 +67,7 @@ Example:
     parameter1 = -i Data/In
     parameter2 = -o Data/OUT
 ```
-***
+------------
 The *tuning-transform* section contains parameters for running a script that will perform data augmentation.
 **Tip:** It is better to specify a local folder in the *-o*/*--output* parameter.
 ```ini
@@ -76,7 +80,8 @@ The *tuning-transform* section contains parameters for running a script that wil
     parameterK = 
 ```
 In the parameter *script_to_tuning* the script is specified that will make the data augmentation. The *amount_of_parameters* contains the number of script startup parameters. The parameters *parameter1*, *parameter2*, ... and *parameterK* are the launch parameters.
-***
+
+------------
 The last section is *records*. This section contains the parameters for running the script that creates input files of the record type.
 ```ini
     [records]
@@ -88,7 +93,8 @@ The last section is *records*. This section contains the parameters for running 
     parameterK = 
 ```
 The parameter *path_to_output* stores the path to the folder where to save the record type files. The *amount_of_parameters* contains the number of script startup parameters. The parameters *parameter1*, *parameter2*, ... and *parameterK* are the launch parameters.
-***
+
+------------
 It is also possible to use links to parameters *output_path*, *local_path*. To do this, write the parameters in curly braces. 
 For example:
 ```ini
