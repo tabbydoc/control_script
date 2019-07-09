@@ -89,7 +89,8 @@ The last section is *records*. This section contains the parameters for running 
 ```
 The parameter *path_to_output* stores the path to the folder where to save the record type files. The *amount_of_parameters* contains the number of script startup parameters. The parameters *parameter1*, *parameter2*, ... and *parameterK* are the launch parameters.
 ***
-It is also possible to use links to parameters *output_path*, *local_path*. To do this, write the parameters in curly braces. For example:
+It is also possible to use links to parameters *output_path*, *local_path*. To do this, write the parameters in curly braces. 
+For example:
 ```ini
     [datasets]
     output_path = Data/Out
