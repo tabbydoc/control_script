@@ -10,6 +10,8 @@ import re
 
 _debug = 0
 _copy_suffix = 1
+_skip_tun = 0
+_skip_transform = 0
 
 try:
     param1 = argv[1]
@@ -109,6 +111,19 @@ def move_files(in_path):
                 shutil.copyfile(ann_path_in, ann_path_out)
                 shutil.copyfile(img_path_in, img_path_out)
 
+def delete_excess(in_path):
+    files = os.listdir(in_path + '/annotations/xmls')
+    for xml_file in files:
+            xml_tree = ET.parse(os.path.join(in_path + '/annotations/xmls', xml_file))
+            new_xml_tree = copy.deepcopy(xml_tree)
+            filename_img = new_xml_tree.find('object')
+            if filename_img is None:
+                print('Delete file - ' + str(xml_file))
+                os.remove(os.path.join(in_path + '/annotations/xmls', xml_file))
+                file_name = xml_file[:-4]
+                img = os.path.join(in_path + '/images/', file_name + '.jpeg')
+                os.remove(img)
+
 
 if __name__ == "__main__":
     print(colored('\n Starting the script', 'blue', attrs=['bold']) + '\n')
@@ -144,7 +159,9 @@ if __name__ == "__main__":
         os.makedirs(annotations_path)
         os.makedirs(xmls_path)
 
-        for i in range(int(config.get("datasets", 'amount_of_datasets'))):
+        count_datasets = int(config.get("datasets", 'amount_of_datasets'))
+
+        for i in range(count_datasets):
             print(colored("= " + config.get('data' + str(i + 1), 'name') + " =", 'blue'))
             script = config.get('data' + str(i + 1), 'script_to_convert')
             data_dir = config.get('data' + str(i + 1), 'path_to_dataset')
@@ -159,13 +176,13 @@ if __name__ == "__main__":
                     print(colored(' -Skip-', 'yellow') + '\n')
             else:
                 error_message(1, script, 'script_to_convert', 'data' + str(i + 1))  # ERROR
-            move_files(output_dir)
-
-        shutil.rmtree(output_dir + '/annotations')
-        shutil.rmtree(output_dir + '/images')
-        print(colored(' - Some data conversions -', 'blue'))
-        subprocess.call(['python', 'transform_data_dir.py', local_dir, output_dir, 'annotations/xmls', 'images', '0'])
-        
+            if count_datasets > 0:
+                move_files(output_dir)
+        if count_datasets > 0:
+            shutil.rmtree(output_dir + '/annotations')
+            shutil.rmtree(output_dir + '/images')
+            print(colored(' - Some data conversions -', 'blue'))
+            subprocess.call(['python', 'transform_data_dir.py', local_dir, output_dir, 'annotations/xmls', 'images', '0'])
         params = ['', '', '', '', '', '', '', '', '', '']
         
         print(colored(" - Image Transform - ", 'blue'))
@@ -190,6 +207,7 @@ if __name__ == "__main__":
                     error_message(3, script, code, '')
             else:
                 print(colored(' -Skip-', 'yellow') + '\n')
+                _skip_transform = 1
         else:
             error_message(1, script, 'script_to_transform', 'image-transform')  # ERROR
 
@@ -215,16 +233,21 @@ if __name__ == "__main__":
                     error_message(3, script, code, '')
             else:
                 print(colored(' -Skip-', 'yellow') + '\n')
+                _skip_tun = 1
         else:
             error_message(1, script, 'script_to_tuning', 'tuning-image')  # ERROR
-                
-        if os.path.exists(os.path.join(output_dir, 'images')):
-            shutil.rmtree(os.path.join(output_dir, 'images'))
-        if os.path.exists(os.path.join(output_dir, 'annotations')):
-            shutil.rmtree(os.path.join(output_dir, 'annotations'))
+        if _skip_tun != 1 and _skip_transform != 1:
 
-        print(colored(' - Some data conversions -', 'blue'))
-        subprocess.call(['python', 'transform_data_dir.py', local_dir, output_dir, 'annotations/xmls', 'images', '0'])
+            if os.path.exists(os.path.join(output_dir, 'images')):
+                shutil.rmtree(os.path.join(output_dir, 'images'))
+            if os.path.exists(os.path.join(output_dir, 'annotations')):
+                shutil.rmtree(os.path.join(output_dir, 'annotations'))
+
+            print(colored(' - Some data conversions -', 'blue'))
+            subprocess.call(['python', 'transform_data_dir.py', local_dir, output_dir, 'annotations/xmls', 'images', '0'])
+
+        print(colored(' - delete excess data -'+output_dir, 'blue'))
+        delete_excess(output_dir)
 
         print(colored(" - Create tfRecords - ", 'blue'))
         script = config.get('records', 'script_to_create_tf_records')
