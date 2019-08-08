@@ -1,7 +1,16 @@
 # control_script
+
 Script to optimize data preparation for training ANN models
 
 ------------
+
+### Whats new
++ Correction of errors when running a script without conversion and tuning scripts.
++ Added algorithm for removing unnecessary (excess) data from the dataset.
++ Replaced and removed some parameters.
+
+------------
+
 The script uses a special file *config.ini*. This file contains the script start-up parameters. This is necessary to simplify the launch of the script. *Config.ini* file is divided into sections. The first section is ‘‘Datasets’’. 
 ```ini
     [datasets]
