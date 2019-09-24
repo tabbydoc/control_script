@@ -13,7 +13,17 @@ Script to optimize data preparation for training ANN models
 
 ------------
 
-The script uses a special file *config.ini*. This file contains the script start-up parameters. This is necessary to simplify the launch of the script. *Config.ini* file is divided into sections. The first section is ‘‘Datasets’’. 
+The script uses a special file *config.ini*. This file contains the script start-up parameters. This is necessary to simplify the launch of the script. *Config.ini* file is divided into sections. The first section is ‘‘settings’’. 
+
+```ini
+    [settings]
+    os = windows
+    train = no
+```
+The *os* parameter defines operatin system for control script. It is necessary for correct work with path. More precisely with symbols "\\" (for windows) and "/" (for ubuntu). The *train* parameter perform test local training process (NOT ENABLED)
+
+------------
+Next section is ‘‘datasets’’. 
 ```ini
     [datasets]
     output_path = 
