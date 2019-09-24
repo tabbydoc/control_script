@@ -8,6 +8,8 @@ Script to optimize data preparation for training ANN models
 + Correction of errors when running a script without conversion and tuning scripts.
 + Added algorithm for removing unnecessary (excess) data from the dataset.
 + Replaced and removed some parameters.
++ Multi Platforming (path)
++ [TEST] Local training process.
 
 ------------
 
