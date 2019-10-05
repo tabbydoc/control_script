@@ -30,7 +30,6 @@ def create_config(path_config):
     """
     config = configparser.ConfigParser()
     config.add_section("settings")
-    config.set("settings", "os", "windows")
     config.set("settings", "train", "no")
 
     config.add_section("datasets")
