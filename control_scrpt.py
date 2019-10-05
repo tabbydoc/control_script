@@ -13,7 +13,7 @@ _copy_suffix = 1
 _skip_tun = 0
 _skip_transform = 0
 _skip_data = 0
-_slash = '\\'
+_slash = os.sep
 _train = 0
 
 try:
@@ -147,14 +147,9 @@ if __name__ == "__main__":
     else:
         config = configparser.ConfigParser()
         config.read(path)
-
-        if config.get("settings", 'os') == 'windows':
-            _slash = '\\'
-        elif config.get("settings", 'os') == 'linux' or config.get("settings", 'os') == 'ubuntu':
-            _slash = '/'
         if config.get("settings", 'train').upper() == 'NO':
             _train = 0
-        elif config.get("settings", 'train').upper() == 'TESTING':
+        elif config.get("settings", 'train').upper() == 'YES':
             _train = 1
         if _debug == 1:
             print(colored(' TRAIN - ' + str(_train), 'yellow'))
@@ -194,7 +189,7 @@ if __name__ == "__main__":
             print(colored(' count of dataset - ' + str(count_datasets), 'yellow'))
             print(colored(' annotations (local) - ' + xmls_path + ' -> ' + str(os.path.exists(xmls_path)), 'yellow'))
             print(colored(' annotations (output data) - ' + os.path.join(os.path.join(output_dir, "annotations"), "xmls") + ' -> ' + str(os.path.exists(os.path.join(os.path.join(output_dir, "annotations"), "xmls"))), 'yellow'))
-            print(colored('\n Operation system - ' + config.get("settings", 'os') + ' => ' + '\'' +_slash + '\'', 'yellow'))
+            print(colored('\n Operation system - ' + config.get("settings", 'os') + ' => ' + '\'' + os.sep + '\'', 'yellow'))
 
         for i in range(count_datasets):
             print(colored("= " + config.get('data' + str(i + 1), 'name') + " =", 'blue'))
