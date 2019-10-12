@@ -1,6 +1,6 @@
 # control_script
 
-Script to optimize data preparation for training ANN models
+Script to automate data preparation for training ANN models
 
 ------------
 
