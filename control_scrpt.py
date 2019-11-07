@@ -6,7 +6,20 @@ import copy
 import configparser
 from termcolor import colored
 from sys import argv
+import sys
 import re
+
+try:
+    from transformdatamodule import *
+except ImportError:
+    sys.path.insert(1, os.path.curdir)
+    from transformdatamodule import *
+
+try:
+    from testmodule import *
+except ImportError:
+    sys.path.insert(1, os.path.curdir)
+    from testmodule import *
 
 _debug = 0
 _copy_suffix = 1
@@ -37,10 +50,11 @@ def create_config(path_config):
     config.set("datasets", "local_path", "")
     config.set("datasets", "amount_of_datasets", "1")
 
-    config.add_section("data1")
-    config.set("data1", "name", "")
-    config.set("data1", "path_to_dataset", "")
-    config.set("data1", "script_to_convert", "")
+    config.add_section("data_name")
+    config.set("data_name", "name", "")
+    config.set("data_name", "path_to_dataset", "")
+    config.set("data_name", "script_to_convert", "")
+    config.set("data_name", "enabled", "True")
 
     config.add_section("image-transform")
     config.set("image-transform", "script_to_transform", "")
@@ -59,6 +73,15 @@ def create_config(path_config):
     with open(path_config, "w") as config_file:
         config.write(config_file)
         print(colored(" File " + path_config + " was created!", "blue"))
+
+
+def replace_string(str):
+    if re.findall(regex_out, str):
+        return re.sub(regex_out, output_dir, str, count=0)
+    elif re.findall(regex_loc, str):
+        return  re.sub(regex_loc, local_dir, str, count=0)
+    else:
+        return str
 
 
 def error_message(error_type, text, text2, text3):
@@ -80,59 +103,9 @@ def error_message(error_type, text, text2, text3):
             "Proposal: Enter the correct path ('" + text2 + "') in the [" + text3 + "] section of the config.ini file.",
             'yellow'))
         raise SystemExit(1)
-
-
-def move_files(in_path):
-    #files = os.listdir(in_path + "+ _slash +annotations+ _slash +xmls")
-    files = os.listdir(os.path.join(in_path, 'annotations' + _slash + 'xmls'))
-    for xml_file in files:
-        if xml_file.endswith('.xml'):
-            ann_path_in = os.path.join(in_path + _slash + 'annotations' + _slash + 'xmls' + _slash, xml_file)
-            if _debug == 1:
-                print(colored("-File xml input - " + ann_path_in, 'green'))
-            ann_path_out = os.path.join(xmls_path, xml_file)
-            if _debug == 1:
-                print(colored("-File xml output - " + ann_path_out, 'green'))
-            file_name = xml_file[:-4]
-            if os.path.exists(ann_path_out):
-                if _debug == 1:
-                    print(colored("-File exist! Run copy proc", 'green'))
-                global _copy_suffix
-                new_filename = file_name + '_' + str(_copy_suffix)
-                ann_path_out = os.path.join(xmls_path, new_filename + '.xml')
-                if _debug == 1:
-                    print(colored("-New xml path - " + ann_path_out, 'green'))
-                shutil.copyfile(ann_path_in, ann_path_out)
-
-                xml_tree = ET.parse(ann_path_out)
-                new_xml_tree = copy.deepcopy(xml_tree)
-                filename_img = new_xml_tree.find('filename')
-                filename_img.text = new_filename + '.jpeg'
-                new_xml_tree.write(ann_path_out)
-
-                img_path_in = os.path.join(in_path + _slash + 'images' + _slash, file_name + '.jpeg')
-                img_path_out = os.path.join(images_path, new_filename + '.jpeg')
-                shutil.copyfile(img_path_in, img_path_out)
-                _copy_suffix += 1
-
-            else:
-                img_path_in = os.path.join(in_path + _slash + 'images' + _slash, file_name + '.jpeg')
-                img_path_out = os.path.join(images_path, file_name + '.jpeg')
-                shutil.copyfile(ann_path_in, ann_path_out)
-                shutil.copyfile(img_path_in, img_path_out)
-
-def delete_excess(in_path):
-    files = os.listdir(in_path + _slash + 'annotations' + _slash + 'xmls')
-    for xml_file in files:
-            xml_tree = ET.parse(os.path.join(in_path + _slash + 'annotations' + _slash + 'xmls', xml_file))
-            new_xml_tree = copy.deepcopy(xml_tree)
-            filename_img = new_xml_tree.find('object')
-            if filename_img is None:
-                print('Delete file - ' + str(xml_file))
-                os.remove(os.path.join(in_path  + _slash + 'annotations' + _slash + 'xmls', xml_file))
-                file_name = xml_file[:-4]
-                img = os.path.join(in_path  + _slash + 'images' + _slash, file_name + '.jpeg')
-                os.remove(img)
+    elif error_type == 4:
+        print(colored('ERROR! Module  ' + text + ' return -1', 'red', attrs=['reverse', 'bold']))
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
@@ -188,60 +161,61 @@ if __name__ == "__main__":
             print(colored(' count of dataset - ' + str(count_datasets), 'yellow'))
             print(colored(' annotations (local) - ' + xmls_path + ' -> ' + str(os.path.exists(xmls_path)), 'yellow'))
             print(colored(' annotations (output data) - ' + os.path.join(os.path.join(output_dir, "annotations"), "xmls") + ' -> ' + str(os.path.exists(os.path.join(os.path.join(output_dir, "annotations"), "xmls"))), 'yellow'))
-            print(colored('\n Operation system - ' + config.get("settings", 'os') + ' => ' + '\'' + os.sep + '\'', 'yellow'))
 
-        for i in range(count_datasets):
-            print(colored("= " + config.get('data' + str(i + 1), 'name') + " =", 'blue'))
-            script = config.get('data' + str(i + 1), 'script_to_convert')
-            data_dir = config.get('data' + str(i + 1), 'path_to_dataset')
-            if os.path.exists(script) or script == "":
-                if script != "":
-                    print(colored('Running script', 'blue'), colored(script, 'blue', attrs=['underline']) + '\n',
-                          colored('-i ' + data_dir + ' -o ' + output_dir, 'blue') + '\n')
-                    code = subprocess.call(['python', script, '-i' + data_dir, '-o' + output_dir, '', ''])
-                    if code != 0:
-                        error_message(3, script, code, '')
+        dataset_list = []
+        for line in open(path, 'r'):
+            res = re.findall(r"\[data_\w+", line)
+            if res:
+                dataset_list.append(res[0][1:])
+        #print(dataset_list)
+
+        for dataset_name in dataset_list:
+            print(colored("= " + config.get(dataset_name, 'name') + " =", 'blue'))
+            script = config.get(dataset_name, 'script_to_convert')
+            data_dir = config.get(dataset_name, 'path_to_dataset')
+            enabled = config.get(dataset_name, "enabled")
+            if enabled.upper() == "YES":
+                if os.path.exists(script) or script == "":
+                    if script != "":
+                        print(colored('Running script', 'blue'), colored(script, 'blue', attrs=['underline']) + '\n',
+                              colored('-i ' + data_dir + ' -o ' + output_dir, 'blue') + '\n')
+                        code = subprocess.call(['python', script, '-i' + data_dir, '-o' + output_dir, '', ''])
+                        if code != 0:
+                            error_message(3, script, code, '')
+                    else:
+                        print(colored(' -Skip-', 'yellow') + '\n')
+                        _skip_data += 1
+                        print(os.path.exists(data_dir  + _slash + 'annotations' + _slash + 'xmls'))
+
+                        try:
+                           transform(data_dir, output_dir, 'annotations' + _slash + 'xmls', 'images', 2)
+                        except RuntimeError:
+                            error_message(4, 'transform', '', '')
                 else:
-                    print(colored(' -Skip-', 'yellow') + '\n')
-                    _skip_data += 1
-                    print(os.path.exists(data_dir  + _slash + 'annotations' + _slash + 'xmls'))
-
-                    code = subprocess.call(
-                        ['python', 'transform_data_dir.py', data_dir, output_dir, 'annotations' + _slash + 'xmls', 'images', '2'])
-                    if code != 0:
-                        error_message(3, 'transform_data_dir.py', code, '')
+                    error_message(1, script, 'script_to_convert', dataset_name)  # ERROR
+                if count_datasets > 1:
+                    move_files(output_dir, _debug, xmls_path, images_path)
             else:
-                error_message(1, script, 'script_to_convert', 'data' + str(i + 1))  # ERROR
-            if count_datasets > 1:
-                move_files(output_dir)
+                print(colored(' -Skip-', 'yellow') + '\n')
         if count_datasets > 1:
             shutil.rmtree(output_dir  + _slash + 'annotations')
             shutil.rmtree(output_dir  + _slash + 'images')
             print(colored(' - Some data conversions -', 'blue'))
-            code = subprocess.call(['python', 'transform_data_dir.py', local_dir, output_dir, 'annotations' + _slash + 'xmls', 'images', '0'])
-            if code != 0:
-                error_message(3, 'transform_data_dir.py', code, '')
+            try:
+                transform(local_dir, output_dir, 'annotations' + _slash + 'xmls', 'images', 2)
+            except RuntimeError:
+                error_message(4, 'transform', '', '')
 
         params = ['', '', '', '', '', '', '', '', '', '']
         
         print(colored(" - Image Transform - ", 'blue'))
         script = config.get('image-transform', 'script_to_transform')
-        data_dir = config.get("datasets", 'output_path')
-        count_parameters = config.get('image-transform', 'amount_of_parameters')
-        for j in range(int(count_parameters)):
-            params[j] = config.get('image-transform', 'parameter'+str(j+1))
-            if re.findall(regex_out, params[j]):
-                params[j] = re.sub(regex_out, output_dir, params[j], count=0)
-            elif re.findall(regex_loc, params[j]):
-                params[j] = re.sub(regex_loc, local_dir, params[j], count=0)
+        data_dir = replace_string(config.get("datasets", 'output_path'))
         if os.path.exists(script) or script == "":
             if script != "":
                 print(colored('Running script', 'blue'), colored(script, 'blue', attrs=['underline']) + '\n',
-                      colored(params[0] + ' ' + params[1] + ' ' + params[2] + ' ' + params[3] + ' ' + params[4] + ' '
-                              + params[5] + ' ' + params[6] + ' ' + params[7] + ' ' + params[8] + ' '
-                              + params[9], 'blue') + '\n')
-                code = subprocess.call(['python', script, params[0], params[1], params[2], params[3], params[4],
-                                        params[5], params[6], params[7], params[8], params[9]])
+                      colored('-i ' + data_dir + ' -o ' + output_dir, 'blue') + '\n')
+                code = subprocess.call(['python', script, '-i' + data_dir, '-o' + output_dir])
                 if code != 0:
                     error_message(3, script, code, '')
             else:
@@ -252,22 +226,12 @@ if __name__ == "__main__":
 
         print(colored(" - Tuning Image - ", 'blue'))
         script = config.get('tuning-image', 'script_to_tuning')
-        data_dir = config.get("datasets", 'output_path')
-        count_parameters = config.get('tuning-image', 'amount_of_parameters')
-        for j in range(int(count_parameters)):
-            params[j] = config.get('tuning-image', 'parameter' + str(j + 1))
-            if re.findall(regex_out, params[j]):
-                params[j] = re.sub(regex_out, output_dir, params[j], count=0)
-            elif re.findall(regex_loc, params[j]):
-                params[j] = re.sub(regex_loc, local_dir, params[j], count=0)
+        data_dir = replace_string(config.get("datasets", 'output_path'))
         if os.path.exists(script) or script == "":
             if script != "":
                 print(colored('Running script', 'blue'), colored(script, 'blue', attrs=['underline']) + '\n',
-                      colored(params[0] + ' ' + params[1] + ' ' + params[2] + ' ' + params[3] + ' ' + params[4] + ' '
-                              + params[5] + ' ' + params[6] + ' ' + params[7] + ' ' + params[8] + ' '
-                              + params[9], 'blue') + '\n')
-                code = subprocess.call(['python', script, params[0], params[1], params[2], params[3], params[4],
-                                        params[5], params[6], params[7], params[8], params[9]])
+                      colored('--data_dir=' + data_dir + ' --output_dir=' + local_dir, 'blue') + '\n')
+                code = subprocess.call(['python', script, '--data_dir=' + data_dir, '--output_dir=' + local_dir])
                 if code != 0:
                     error_message(3, script, code, '')
             else:
@@ -283,7 +247,10 @@ if __name__ == "__main__":
                 shutil.rmtree(os.path.join(output_dir, 'annotations'))
 
             print(colored(' - Some data conversions -', 'blue'))
-            subprocess.call(['python', 'transform_data_dir.py', local_dir, output_dir, 'annotations' + _slash + 'xmls', 'images', '0'])
+            try:
+                transform(data_dir, output_dir, 'annotations' + _slash + 'xmls', 'images', 2)
+            except RuntimeError:
+                error_message(4, 'transform', '', '')
 
         print(colored(' - delete excess data -'+output_dir, 'blue'))
         delete_excess(output_dir)
@@ -296,29 +263,13 @@ if __name__ == "__main__":
         print(output_path)
         label_map_path = config.get('records', 'path_to_label_map')
         label_map_path = label_map_path.replace('\\r', '\\\\r')
-        count_parameters = config.get('records', 'amount_of_parameters')
-        for j in range(int(count_parameters)):
-            params[j] = config.get('records', 'parameter' + str(j + 1))
-            print('Before[' + str(j) + ']' + params[j])
-            if re.findall(regex_out, params[j]):
-                params[j] = re.sub(regex_out, output_dir, params[j], count=0)
-                print('!')
-            elif re.findall(regex_loc, params[j]):
-                params[j] = re.sub(regex_loc, local_dir, params[j], count=0)
-            elif re.findall(r'{path_to_output}', params[j]):
-                params[j] = re.sub(r'{path_to_output}', output_path, params[j], count=0)
-                print(params[j])
-            elif re.findall(r'{path_to_label_map}', params[j]):
-                params[j] = re.sub(r'{path_to_label_map}', label_map_path, params[j], count=0)
-            print('After[' + str(j) +']'+ params[j])
         if os.path.exists(script) or script == "":
             if script != "":
                 print(colored('Running script', 'blue'), colored(script, 'blue', attrs=['underline']) + '\n',
-                      colored(params[0] + ' ' + params[1] + ' ' + params[2] + ' ' + params[3] + ' ' + params[4] + ' '
-                              + params[5] + ' ' + params[6] + ' ' + params[7] + ' ' + params[8] + ' '
-                              + params[9], 'blue') + '\n')
-                code = subprocess.call(['python', script, params[0], params[1], params[2], params[3], params[4],
-                                        params[5], params[6], params[7], params[8], params[9]])
+                      colored('--data_dir=' + data_dir + ' ' + '--output_dir=' + output_path + ' ' + '--label_map_path=' +
+                              label_map_path, 'blue') + '\n')
+                code = subprocess.call(['python', script, '--data_dir=' + data_dir, '--output_dir=' + output_path,
+                                        '--label_map_path=' + label_map_path])
                 if code != 0:
                     error_message(3, script, code, '')
             else:
