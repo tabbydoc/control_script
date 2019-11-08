@@ -17,10 +17,9 @@ The script uses a special file *config.ini*. This file contains the script start
 
 ```ini
     [settings]
-    os = windows
     train = no
 ```
-The *os* parameter defines operatin system for control script. It is necessary for correct work with path. More precisely with symbols "\\" (for windows) and "/" (for ubuntu). The *train* parameter perform test local training process (NOT ENABLED)
+The *train* parameter perform test local training process (NOT ENABLED)
 
 ------------
 Next section is ‘‘datasets’’. 
@@ -35,7 +34,7 @@ The *output_path* parameter stores the path where the converted data will be sav
 ------------
 The following N sections store parameters for specific datasets.
 ```ini
-    [dataN]
+    [data_NAME]
     name = 
     path_to_dataset = 
     script_to_convert =
