@@ -42,7 +42,6 @@ def create_config(path_config):
     config.add_section("datasets")
     config.set("datasets", "output_path", "")
     config.set("datasets", "local_path", "")
-    config.set("datasets", "amount_of_datasets", "1")
 
     config.add_section("data_name")
     config.set("data_name", "name", "")
@@ -52,9 +51,6 @@ def create_config(path_config):
 
     config.add_section("image-transform")
     config.set("image-transform", "script_to_transform", "")
-    config.set("image-transform", "amount_of_parameters", "2")
-    config.set("image-transform", "parameter1", "")
-    config.set("image-transform", "parameter2", "")
 
     config.add_section("tuning-image")
     config.set("tuning-image", "script_to_tuning", "")
@@ -252,6 +248,7 @@ if __name__ == "__main__":
         print(colored(" - Create tfRecords - ", 'blue'))
         script = config.get('records', 'script_to_create_tf_records')
         data_dir = config.get('datasets', 'output_path')
+        data_dir = data_dir.replace('\\r', '\\\\r')
         output_path = config.get('records', 'path_to_output')
         output_path = output_path.replace('\\r', '\\\\r')
         print(output_path)
