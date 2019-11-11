@@ -15,12 +15,6 @@ except ImportError:
     sys.path.insert(1, os.path.curdir)
     from transformdatamodule import *
 
-try:
-    from testmodule import *
-except ImportError:
-    sys.path.insert(1, os.path.curdir)
-    from testmodule import *
-
 _debug = 0
 _copy_suffix = 1
 _skip_tun = 0
@@ -113,6 +107,11 @@ if __name__ == "__main__":
     path = "config.ini"
     regex_out = "{output_path}"
     regex_loc = "{local_path}"
+    if sys.version_info[0] < 3:
+        python_ver = "python3"
+    else:
+        python_ver = "python"
+
     if not os.path.exists(path):
         error_message(0, path, '', '')  # ERROR
         create_config(path)
@@ -129,10 +128,12 @@ if __name__ == "__main__":
         print(colored(' - datasets -', 'blue'))
         output_dir = config.get("datasets", 'output_path')
         if not os.path.exists(output_dir):
-            error_message(2, output_dir, 'output_path', "datasets")  # ERROR
+            #error_message(2, output_dir, 'output_path', "datasets")  # ERROR
+            os.mkdir(output_dir)
         local_dir = config.get("datasets", 'local_path')
         if not os.path.exists(local_dir):
-            error_message(2, local_dir, 'local_path', "datasets")  # ERROR
+            #error_message(2, local_dir, 'local_path', "datasets")  # ERROR
+            os.mkdir(local_dir)
 
         annotations_path = os.path.join(local_dir, "annotations")
         xmls_path = os.path.join(annotations_path, "xmls")
@@ -156,9 +157,7 @@ if __name__ == "__main__":
         if not os.path.exists(os.path.join(output_dir, "images")):
             os.mkdir(os.path.join(output_dir, "images"))
 
-        count_datasets = int(config.get("datasets", 'amount_of_datasets'))
         if _debug == 1:
-            print(colored(' count of dataset - ' + str(count_datasets), 'yellow'))
             print(colored(' annotations (local) - ' + xmls_path + ' -> ' + str(os.path.exists(xmls_path)), 'yellow'))
             print(colored(' annotations (output data) - ' + os.path.join(os.path.join(output_dir, "annotations"), "xmls") + ' -> ' + str(os.path.exists(os.path.join(os.path.join(output_dir, "annotations"), "xmls"))), 'yellow'))
 
@@ -174,12 +173,12 @@ if __name__ == "__main__":
             script = config.get(dataset_name, 'script_to_convert')
             data_dir = config.get(dataset_name, 'path_to_dataset')
             enabled = config.get(dataset_name, "enabled")
-            if enabled.upper() == "YES":
+            if enabled.upper() == "YES" or enabled.upper() == "TRUE":
                 if os.path.exists(script) or script == "":
                     if script != "":
                         print(colored('Running script', 'blue'), colored(script, 'blue', attrs=['underline']) + '\n',
                               colored('-i ' + data_dir + ' -o ' + output_dir, 'blue') + '\n')
-                        code = subprocess.call(['python', script, '-i' + data_dir, '-o' + output_dir, '', ''])
+                        code = subprocess.call([python_ver, script, '-i' + data_dir, '-o' + output_dir, '', ''])
                         if code != 0:
                             error_message(3, script, code, '')
                     else:
@@ -192,7 +191,7 @@ if __name__ == "__main__":
                         except RuntimeError:
                             error_message(4, 'transform', '', '')
                 else:
-                    error_message(1, script, 'script_to_convert', dataset_name)  # ERROR
+                    error_message(1, script, 'script_to_convert. Enabled = false', dataset_name)  # ERROR
                 if count_datasets > 1:
                     move_files(output_dir, _debug, xmls_path, images_path)
             else:
@@ -215,7 +214,7 @@ if __name__ == "__main__":
             if script != "":
                 print(colored('Running script', 'blue'), colored(script, 'blue', attrs=['underline']) + '\n',
                       colored('-i ' + data_dir + ' -o ' + output_dir, 'blue') + '\n')
-                code = subprocess.call(['python', script, '-i' + data_dir, '-o' + output_dir])
+                code = subprocess.call([python_ver, script, '-i' + data_dir, '-o' + output_dir])
                 if code != 0:
                     error_message(3, script, code, '')
             else:
@@ -231,7 +230,7 @@ if __name__ == "__main__":
             if script != "":
                 print(colored('Running script', 'blue'), colored(script, 'blue', attrs=['underline']) + '\n',
                       colored('--data_dir=' + data_dir + ' --output_dir=' + local_dir, 'blue') + '\n')
-                code = subprocess.call(['python', script, '--data_dir=' + data_dir, '--output_dir=' + local_dir])
+                code = subprocess.call([python_ver, script, '--data_dir=' + data_dir, '--output_dir=' + local_dir])
                 if code != 0:
                     error_message(3, script, code, '')
             else:
@@ -268,7 +267,7 @@ if __name__ == "__main__":
                 print(colored('Running script', 'blue'), colored(script, 'blue', attrs=['underline']) + '\n',
                       colored('--data_dir=' + data_dir + ' ' + '--output_dir=' + output_path + ' ' + '--label_map_path=' +
                               label_map_path, 'blue') + '\n')
-                code = subprocess.call(['python', script, '--data_dir=' + data_dir, '--output_dir=' + output_path,
+                code = subprocess.call([python_ver, script, '--data_dir=' + data_dir, '--output_dir=' + output_path,
                                         '--label_map_path=' + label_map_path])
                 if code != 0:
                     error_message(3, script, code, '')
@@ -290,7 +289,7 @@ if __name__ == "__main__":
             os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
             print(colored('Running script'+script + ' --logtostderr --train_dir='+train_dir+'--pipeline_config_path' +
                           pipeline_config_path, 'blue'))
-            code = subprocess.call(['python', script, '--logtostderr', '--train_dir='+train_dir, '--pipeline_config_path' +
+            code = subprocess.call([python_ver, script, '--logtostderr', '--train_dir='+train_dir, '--pipeline_config_path' +
                              pipeline_config_path])
             if code != 0:
                 error_message(3, script, code, '')
