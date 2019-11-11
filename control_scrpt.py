@@ -128,11 +128,9 @@ if __name__ == "__main__":
         print(colored(' - datasets -', 'blue'))
         output_dir = config.get("datasets", 'output_path')
         if not os.path.exists(output_dir):
-            #error_message(2, output_dir, 'output_path', "datasets")  # ERROR
             os.mkdir(output_dir)
         local_dir = config.get("datasets", 'local_path')
         if not os.path.exists(local_dir):
-            #error_message(2, local_dir, 'local_path', "datasets")  # ERROR
             os.mkdir(local_dir)
 
         annotations_path = os.path.join(local_dir, "annotations")
@@ -166,7 +164,6 @@ if __name__ == "__main__":
             res = re.findall(r"\[data_\w+", line)
             if res:
                 dataset_list.append(res[0][1:])
-        #print(dataset_list)
 
         for dataset_name in dataset_list:
             print(colored("= " + config.get(dataset_name, 'name') + " =", 'blue'))
@@ -192,11 +189,11 @@ if __name__ == "__main__":
                             error_message(4, 'transform', '', '')
                 else:
                     error_message(1, script, 'script_to_convert. Enabled = false', dataset_name)  # ERROR
-                if count_datasets > 1:
+                if len(dataset_list) > 1:
                     move_files(output_dir, _debug, xmls_path, images_path)
             else:
                 print(colored(' -Skip-', 'yellow') + '\n')
-        if count_datasets > 1:
+        if len(dataset_list) > 1:
             shutil.rmtree(output_dir  + _slash + 'annotations')
             shutil.rmtree(output_dir  + _slash + 'images')
             print(colored(' - Some data conversions -', 'blue'))
@@ -204,8 +201,6 @@ if __name__ == "__main__":
                 transform(local_dir, output_dir, 'annotations' + _slash + 'xmls', 'images', 2)
             except RuntimeError:
                 error_message(4, 'transform', '', '')
-
-        params = ['', '', '', '', '', '', '', '', '', '']
         
         print(colored(" - Image Transform - ", 'blue'))
         script = config.get('image-transform', 'script_to_transform')
